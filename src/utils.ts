@@ -1,0 +1,193 @@
+import {
+  BI,
+  BIish,
+  Cell,
+  CellDep,
+  Indexer,
+  RPC,
+  config,
+  helpers,
+  hd,
+  Script,
+} from '@ckb-lumos/lumos';
+import { blockchain } from '@ckb-lumos/lumos/codec';
+import * as codec from '@ckb-lumos/codec';
+import { createTransactionFromSkeleton, TransactionSkeletonType } from '@ckb-lumos/lumos/helpers';
+
+// Minimum Capacity: JoyID lock(55 bytes) + UDT type script(65 bytes) + UDT cell data(16 bytes) + Cell capacity(8 bytes) = 144 bytes
+export const ACP_MIN_CAPACITY = 144;
+export const ACP_MIN_HEX_CAPACITY = '0x35a4e9000'; // 144 * 10 ** 8 in hexadecimal
+// Default capacity for ACP cells in CKB(0.01 CKB for transaction fee)
+export const ACP_DEFAULT_CAPACITY = ACP_MIN_CAPACITY + 0.01;
+
+const USDI_TESTNET_TYPE_SCRIPT: Script = {
+  codeHash: '0xcc9dc33ef234e14bc788c43a4848556a5fb16401a04662fc55db9bb201987037',
+  hashType: 'type',
+  args: '0x71fd1985b2971a9903e4d8ed0d59e6710166985217ca0681437883837b86162f',
+};
+const USDI_TESTNET_CELL_DEP: CellDep = {
+  outPoint: {
+    txHash: '0xaec423c2af7fe844b476333190096b10fc5726e6d9ac58a9b71f71ffac204fee',
+    index: '0x0',
+  },
+  depType: 'code',
+};
+const USDI_MAINNET_TYPE_SCRIPT: Script = {
+  codeHash: '0xbfa35a9c38a676682b65ade8f02be164d48632281477e36f8dc2f41f79e56bfc',
+  hashType: 'type',
+  args: '0xd591ebdc69626647e056e13345fd830c8b876bb06aa07ba610479eb77153ea9f',
+};
+const USDI_MAINNET_CELL_DEP: CellDep = {
+  outPoint: {
+    txHash: '0xf6a5eef65101899db9709c8de1cc28f23c1bee90d857ebe176f6647ef109e20d',
+    index: '0x0',
+  },
+  depType: 'code',
+};
+
+export interface CkbUtilParams {
+  ckbRpcUrl: string;
+  ckbIndexerUrl: string;
+  isMainnet: boolean;
+}
+
+export class CkbUtils {
+  private isMainnet: boolean;
+  public rpc: RPC;
+  public indexer: Indexer;
+  public lumosConfig: typeof config.TESTNET | typeof config.MAINNET;
+
+  public constructor(params: CkbUtilParams) {
+    this.isMainnet = params.isMainnet;
+    this.rpc = new RPC(params.ckbRpcUrl);
+    this.indexer = new Indexer(params.ckbIndexerUrl, params.ckbRpcUrl);
+    this.lumosConfig = params.isMainnet ? config.MAINNET : config.TESTNET;
+    config.initializeConfig(this.lumosConfig);
+  }
+
+  encodeAcpAddress = (publicKey: string): string => {
+    const args = hd.key.publicKeyToBlake160(publicKey);
+    const acpLock = {
+      codeHash: this.lumosConfig.SCRIPTS.ANYONE_CAN_PAY.CODE_HASH,
+      hashType: this.lumosConfig.SCRIPTS.ANYONE_CAN_PAY.HASH_TYPE,
+      args,
+    };
+    return helpers.encodeToAddress(acpLock, { config: this.lumosConfig });
+  };
+
+  getAcpCellDep = (): CellDep => {
+    const acpDep = this.lumosConfig.SCRIPTS.ANYONE_CAN_PAY;
+    return {
+      depType: acpDep.DEP_TYPE,
+      outPoint: {
+        txHash: acpDep.TX_HASH,
+        index: acpDep.INDEX,
+      },
+    };
+  };
+
+  getUsdiTypeScript = (): Script =>
+    this.isMainnet ? USDI_MAINNET_TYPE_SCRIPT : USDI_TESTNET_TYPE_SCRIPT;
+
+  getUsdiCellDep = (): CellDep => (this.isMainnet ? USDI_MAINNET_CELL_DEP : USDI_TESTNET_CELL_DEP);
+
+  getSecp256k1Dep = (): CellDep => {
+    const secp256k1Dep = this.lumosConfig.SCRIPTS.SECP256K1_BLAKE160;
+    return {
+      depType: secp256k1Dep.DEP_TYPE,
+      outPoint: {
+        txHash: secp256k1Dep.TX_HASH,
+        index: secp256k1Dep.INDEX,
+      },
+    };
+  };
+
+  getCkbBalanceAndEmptyCells = async (
+    address: string,
+  ): Promise<{ balance: BI; emptyCells: Cell[] }> => {
+    const collector = this.indexer.collector({
+      lock: helpers.parseAddress(address),
+    });
+
+    let balance = BI.from(0);
+    const emptyCells: Cell[] = [];
+    for await (const cell of collector.collect()) {
+      balance = balance.add(BI.from(cell.cellOutput.capacity));
+      if (!cell.cellOutput.type) {
+        emptyCells.push(cell);
+      }
+    }
+
+    return { balance, emptyCells };
+  };
+
+  getUSDIBalanceAndCells = async (address: string): Promise<{ balance: BI; cells: Cell[] }> => {
+    const collector = this.indexer.collector({
+      lock: helpers.parseAddress(address),
+      type: this.getUsdiTypeScript(),
+    });
+
+    let balance = BI.from(0);
+    const cells: Cell[] = [];
+    for await (const cell of collector.collect()) {
+      balance = balance.add(codec.number.Uint128LE.unpack(cell.data));
+      cells.push(cell);
+    }
+
+    return { balance, cells };
+  };
+
+  getAcpUsdiCell = async (address: string): Promise<Cell | null> => {
+    const collector = this.indexer.collector({
+      lock: helpers.parseAddress(address),
+      type: this.getUsdiTypeScript(),
+      outputCapacityRange: [ACP_MIN_HEX_CAPACITY, '0xFFFFFFFFFFFFFFFF'],
+    });
+    for await (const cell of collector.collect()) {
+      return cell;
+    }
+    return null;
+  };
+
+  getAcpUsdiCells = async (address: string): Promise<Cell[]> => {
+    const collector = this.indexer.collector({
+      lock: helpers.parseAddress(address),
+      type: this.getUsdiTypeScript(),
+      outputCapacityRange: [ACP_MIN_HEX_CAPACITY, '0xFFFFFFFFFFFFFFFF'],
+    });
+    const cells: Cell[] = [];
+    for await (const cell of collector.collect()) {
+      cells.push(cell);
+    }
+    return cells;
+  };
+
+  generateSecp256k1EmptyWitness = () => {
+    const witnessArgs = { lock: '0x' + '00'.repeat(65) };
+    const witness = codec.bytes.hexify(blockchain.WitnessArgs.pack(witnessArgs));
+    return witness;
+  };
+
+  _getTransactionSize = (txSkeleton: TransactionSkeletonType): number => {
+    const tx = createTransactionFromSkeleton(txSkeleton);
+    const serializedTx = blockchain.Transaction.pack(tx);
+    // 4 is serialized offset bytesize
+    const size = serializedTx.byteLength + 4;
+    return size;
+  };
+
+  _calculateFeeCompatible = (size: number, feeRate: BIish): BI => {
+    const ratio = BI.from(1000);
+    const base = BI.from(size).mul(feeRate);
+    const fee = base.div(ratio);
+    if (fee.mul(ratio).lt(base)) {
+      return fee.add(1);
+    }
+    return BI.from(fee);
+  };
+
+  calculateTxFee = (txSkeleton: TransactionSkeletonType, feeRate: number): BI => {
+    const size = this._getTransactionSize(txSkeleton);
+    return this._calculateFeeCompatible(size, feeRate);
+  };
+}
