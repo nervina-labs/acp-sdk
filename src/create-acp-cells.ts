@@ -5,17 +5,17 @@ import { TransactionSkeletonType } from '@ckb-lumos/lumos/helpers';
 export interface CreatingAcpCellsParams {
   ckbUtils: CkbUtils;
   fromSecp256k1Address: string;
-  acpAddress: string;
-  count: number;
-  acpCapacity: number;
-  feeRate: number;
+  toAcpAddress: string;
+  count?: number;
+  acpCapacity?: number;
+  feeRate?: number;
 }
 
 /**
  * Constructs a CKB transaction to create ACP (Anyone-Can-Pay) cells using a secp256k1 address to provide CKB.
  * @param ckbUtils - An instance of CkbUtils to interact with CKB node and indexer.
  * @param fromSecp256k1Address - The secp256k1 address that will provide CKB for the transaction.
- * @param acpAddress - The ACP address where the new cells will be created.
+ * @param toAcpAddress - The ACP address where the new cells will be created.
  * @param count - The number of ACP cells to create. Defaults to 1.
  * @param acpCapacity - The capacity of each ACP cell in CKB. Defaults to ACP_DEFAULT_CAPACITY (144.01 CKB).
  * @param feeRate - The fee rate in Shannons per kilobyte for the transaction. Defaults to 1000 shannons/KB.
@@ -24,7 +24,7 @@ export interface CreatingAcpCellsParams {
 export const constructTxSkeletonToCreateAcpCells = async ({
   ckbUtils,
   fromSecp256k1Address,
-  acpAddress,
+  toAcpAddress,
   count = 1,
   acpCapacity = ACP_DEFAULT_CAPACITY,
   feeRate = 1000,
@@ -33,7 +33,7 @@ export const constructTxSkeletonToCreateAcpCells = async ({
   const expectedCapacities = singleCapacity.mul(BI.from(count));
 
   const providerLock = helpers.parseAddress(fromSecp256k1Address);
-  const acpLock = helpers.parseAddress(acpAddress);
+  const acpLock = helpers.parseAddress(toAcpAddress);
 
   let txSkeleton = helpers.TransactionSkeleton({ cellProvider: ckbUtils.indexer });
 

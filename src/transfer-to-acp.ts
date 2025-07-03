@@ -8,13 +8,13 @@ export interface TransferringToAcpParams {
   fromSecp256k1Address: string;
   toAcpAddress: string;
   usdiAmount: number;
-  feeRate: number;
+  feeRate?: number;
 }
 
 /**
  * Constructs a CKB transactionSkeleton to transfer USDI from a secp256k1 address to an ACP (Anyone-Can-Pay) address.
  * Tx Structure:
- * [toAcpCell, secp256k1UsdiInputs, secp256k1EmptyInputs(optional)] -> [toAcpUsdiOutput, changeUsdiOutput, changeCkbOutput(optional)]
+ * [secp256k1UsdiInputs, secp256k1EmptyInputs(optional), toAcpCell] -> [toAcpUsdiOutput, changeUsdiOutput, changeCkbOutput(optional)]
  * @param ckbUtils - An instance of CkbUtils to interact with CKB node and indexer.
  * @param fromSecp256k1Address - The secp256k1 address that will provide USDI and CKB(maybe) for the transaction.
  * @param toAcpAddress - The ACP address to transfer USDI to.
@@ -74,7 +74,7 @@ export const constructTxSkeletonToTransferUSDIToAcpAddress = async ({
     }
     inputCells.push(emptyCells[0]);
   }
-  txSkeleton = txSkeleton.update('inputs', (inputs) => inputs.push(toAcpCell, ...inputCells));
+  txSkeleton = txSkeleton.update('inputs', (inputs) => inputs.push(...inputCells, toAcpCell));
 
   const toAcpUsdiAmount = codec.number.Uint128LE.unpack(toAcpCell.data).add(usdiAmountForTransfer);
   const acpOutput = {
@@ -142,7 +142,7 @@ export interface TransferringFromAcpToAcpParams {
   fromAcpAddress: string;
   toAcpAddress: string;
   usdiAmount: number;
-  feeRate: number;
+  feeRate?: number;
 }
 /**
  * Constructs a CKB transactionSkeleton to transfer USDI from a secp256k1 address to an ACP (Anyone-Can-Pay) address.
@@ -194,7 +194,7 @@ export const constructTxSkeletonToTransferUSDIFromAcpToAcp = async ({
       `Not enough USDI, expected: ${usdiAmount}, got: ${usdiSupply.div(BI.from(USDI_DECIMALS)).toString()}.\nMore USDI is needed in the address: ${fromAcpAddress}`,
     );
   }
-  txSkeleton = txSkeleton.update('inputs', (inputs) => inputs.push(toAcpCell, ...inputCells));
+  txSkeleton = txSkeleton.update('inputs', (inputs) => inputs.push(...inputCells, toAcpCell));
 
   const toAcpUsdiAmount = codec.number.Uint128LE.unpack(toAcpCell.data).add(usdiAmountForTransfer);
   const acpOutput = {

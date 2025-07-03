@@ -68,12 +68,29 @@ export class CkbUtils {
     config.initializeConfig(this.lumosConfig);
   }
 
+  _encodePublicKeyHash = (publicKey: string): string => {
+    if (!publicKey.startsWith('0x') || publicKey.length !== 68) {
+      throw new Error(
+        'The Secp256k1 public key should be a 68-character hex string prefixed with 0x.',
+      );
+    }
+    return hd.key.publicKeyToBlake160(publicKey);
+  };
+
+  encodeSecp256k1Address = (publicKey: string): string => {
+    const secp256k1Lock = {
+      codeHash: this.lumosConfig.SCRIPTS.SECP256K1_BLAKE160.CODE_HASH,
+      hashType: this.lumosConfig.SCRIPTS.SECP256K1_BLAKE160.HASH_TYPE,
+      args: this._encodePublicKeyHash(publicKey),
+    };
+    return helpers.encodeToAddress(secp256k1Lock, { config: this.lumosConfig });
+  };
+
   encodeAcpAddress = (publicKey: string): string => {
-    const args = hd.key.publicKeyToBlake160(publicKey);
     const acpLock = {
       codeHash: this.lumosConfig.SCRIPTS.ANYONE_CAN_PAY.CODE_HASH,
       hashType: this.lumosConfig.SCRIPTS.ANYONE_CAN_PAY.HASH_TYPE,
-      args,
+      args: this._encodePublicKeyHash(publicKey),
     };
     return helpers.encodeToAddress(acpLock, { config: this.lumosConfig });
   };

@@ -8,8 +8,13 @@
   "sideEffects": false,
   "scripts": {
     "build": "tsup",
-    "format": "prettier --write \"src/**/*.ts\"",
-    "lint": "eslint \"src/**/*.ts\" --fix",
+    "format": "prettier --write \"{src,examples}/**/*.ts\"",
+    "lint": "eslint \"{src,examples}/**/*.ts\" --fix",
+    "generateAddress": "tsx examples/generateAddress.ts",
+    "createAcpCells": "tsx examples/createAcpCells.ts",
+    "transferUSDIToAcp": "tsx examples/transferUSDIToAcp.ts",
+    "transferUSDIFromAcpToAcp": "tsx examples/transferUSDIFromAcpToAcp.ts",
+    "transferAllUSDIFromAcp": "tsx examples/transferAllUSDIFromAcp.ts",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
@@ -30,11 +35,13 @@
   "packageManager": "pnpm@10.11.0",
   "devDependencies": {
     "@eslint/js": "^9.30.1",
+    "@types/node": "^24.0.10",
+    "dotenv": "^16.6.0",
     "eslint": "^9.30.1",
     "globals": "^16.3.0",
     "prettier": "3.6.2",
-    "ts-node": "^10.9.2",
     "tsup": "^8.5.0",
+    "tsx": "^4.20.3",
     "typescript": "^5.8.3",
     "typescript-eslint": "^8.35.1"
   },

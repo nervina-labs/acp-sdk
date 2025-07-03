@@ -7,7 +7,7 @@ export interface TransferringAllParams {
   ckbUtils: CkbUtils;
   fromAcpAddress: string;
   toNonAcpAddress: string;
-  feeRate: number;
+  feeRate?: number;
 }
 /**
  * Constructs a CKB transactionSkeleton to transfer all USDI from an ACP (Anyone-Can-Pay) address to a non-ACP address.
