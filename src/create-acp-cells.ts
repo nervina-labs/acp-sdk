@@ -1,5 +1,5 @@
-import { BI, Cell, commons, helpers, Transaction } from '@ckb-lumos/lumos';
-import { ACP_DEFAULT_CAPACITY, CkbUtils } from './utils';
+import { BI, Cell, helpers, Transaction } from '@ckb-lumos/lumos';
+import { ACP_DEFAULT_CAPACITY, CKB_UNIT_SCALE, CkbUtils } from './utils';
 import { TransactionSkeletonType } from '@ckb-lumos/lumos/helpers';
 
 export interface CreatingAcpCellsParams {
@@ -29,7 +29,7 @@ export const constructTxSkeletonToCreateAcpCells = async ({
   acpCapacity = ACP_DEFAULT_CAPACITY,
   feeRate = 1000,
 }: CreatingAcpCellsParams): Promise<TransactionSkeletonType> => {
-  const singleCapacity = BI.from(acpCapacity * 10 ** 8);
+  const singleCapacity = BI.from(acpCapacity * CKB_UNIT_SCALE);
   const expectedCapacities = singleCapacity.mul(BI.from(count));
 
   const providerLock = helpers.parseAddress(fromSecp256k1Address);
@@ -50,7 +50,7 @@ export const constructTxSkeletonToCreateAcpCells = async ({
   }
   if (inputsCapacities.lt(expectedCapacities)) {
     throw new Error(
-      `Not enough capacity, expected: ${expectedCapacities.div(BI.from(10 ** 8))}, got: ${inputsCapacities.div(BI.from(10 ** 8))}.\n 
+      `Not enough capacity, expected: ${expectedCapacities.div(BI.from(CKB_UNIT_SCALE))}, got: ${inputsCapacities.div(BI.from(CKB_UNIT_SCALE))}.\n 
       More CKB is needed in the address: ${fromSecp256k1Address}`,
     );
   }
@@ -82,7 +82,8 @@ export const constructTxSkeletonToCreateAcpCells = async ({
     return witnesses.set(0, ckbUtils.generateSecp256k1EmptyWitness());
   });
 
-  const txFee = ckbUtils.calculateTxFee(txSkeleton, feeRate); // Assuming a fee rate of 1000 shannons/KB
+  // Calculate transaction fee and adjust change output capacity
+  const txFee = ckbUtils.calculateTxFee(txSkeleton, feeRate);
   txSkeleton = txSkeleton.update('outputs', (outputs) => {
     return outputs.set(outputs.size - 1, {
       ...changeOutput,
@@ -92,8 +93,6 @@ export const constructTxSkeletonToCreateAcpCells = async ({
       },
     });
   });
-
-  txSkeleton = commons.common.prepareSigningEntries(txSkeleton);
 
   return txSkeleton;
 };

@@ -15,10 +15,13 @@ import * as codec from '@ckb-lumos/codec';
 import { createTransactionFromSkeleton, TransactionSkeletonType } from '@ckb-lumos/lumos/helpers';
 
 // Minimum Capacity: JoyID lock(55 bytes) + UDT type script(65 bytes) + UDT cell data(16 bytes) + Cell capacity(8 bytes) = 144 bytes
-export const ACP_MIN_CAPACITY = 144;
-export const ACP_MIN_HEX_CAPACITY = '0x35a4e9000'; // 144 * 10 ** 8 in hexadecimal
+const ACP_MIN_CAPACITY = 144;
+const ACP_MIN_HEX_CAPACITY = '0x35a4e9000'; // 144 * 10 ** 8 in hexadecimal
 // Default capacity for ACP cells in CKB(0.01 CKB for transaction fee)
 export const ACP_DEFAULT_CAPACITY = ACP_MIN_CAPACITY + 0.01;
+
+export const USDI_DECIMALS = 10 ** 6; // USDI is in 6 decimal places
+export const CKB_UNIT_SCALE = 10 ** 8; // CKB is in 8 decimal places
 
 const USDI_TESTNET_TYPE_SCRIPT: Script = {
   codeHash: '0xcc9dc33ef234e14bc788c43a4848556a5fb16401a04662fc55db9bb201987037',
