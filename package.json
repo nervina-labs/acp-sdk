@@ -1,16 +1,32 @@
 {
-  "name": "acp-sdk",
-  "version": "1.0.0",
+  "name": "@nervia-labs/acp-sdk",
+  "version": "0.1.0",
   "description": "",
-  "main": "index.js",
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "sideEffects": false,
   "scripts": {
+    "build": "tsup",
     "format": "prettier --write \"src/**/*.ts\"",
     "lint": "eslint \"src/**/*.ts\" --fix",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
   "author": "",
-  "license": "ISC",
+  "license": "MIT",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "src",
+    "dist"
+  ],
   "packageManager": "pnpm@10.11.0",
   "devDependencies": {
     "@eslint/js": "^9.30.1",
@@ -18,6 +34,7 @@
     "globals": "^16.3.0",
     "prettier": "3.6.2",
     "ts-node": "^10.9.2",
+    "tsup": "^8.5.0",
     "typescript": "^5.8.3",
     "typescript-eslint": "^8.35.1"
   },
