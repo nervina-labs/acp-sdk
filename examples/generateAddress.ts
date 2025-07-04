@@ -20,8 +20,9 @@ const generateSecp256k1Address = async () => {
   const publicKey = hd.key.privateToPublic(privateKey);
   const secp256k1Address = ckbUtils.encodeSecp256k1Address(publicKey);
   console.log(`Secp256k1 Address: ${secp256k1Address}`);
+
+  const acpAddress = ckbUtils.encodeAcpAddress(publicKey)
+  console.log('Acp Address:', acpAddress);
 }
 
 generateSecp256k1Address()
-  .then(() => console.log('Secp256k1 address generated successfully.'))
-  .catch((error) => console.error('Error generating Secp256k1 address:', error));

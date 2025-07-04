@@ -33,5 +33,5 @@ const transferUSDIToAcpFromSecp256k1Address = async () => {
 }
 
 transferUSDIToAcpFromSecp256k1Address()
-  .then(() => console.log('Transfer USDI to Acp address successfully.'))
-  .catch((error) => console.error('Error transferring USDI:', error));
+  .then(() => console.log('WIthdraw USDI to Acp address successfully.'))
+  .catch((error) => console.error('Error withdrawing USDI:', error));

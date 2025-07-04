@@ -1,10 +1,10 @@
 import { hd } from "@ckb-lumos/lumos";
 import dotenv from 'dotenv';
-import { CkbUtils, constructTxSkeletonToTransferUSDIFromAcpToAcp, signAndSendTxWithSecp256k1Key } from "../src";
+import { CkbUtils, constructTxSkeletonToTransferUSDIToAcpAddress, signAndSendTxWithSecp256k1Key } from "../src";
 
 dotenv.config();
 
-const transferUSDIToAcpFromAcpAddress = async () => {
+const transferUSDIToAcpFromSecp256k1Address = async () => {
   const ckbUtils = new CkbUtils({
     ckbRpcUrl: 'https://testnet.ckb.dev/rpc',
     ckbIndexerUrl: 'https://testnet.ckb.dev/indexer',
@@ -17,16 +17,15 @@ const transferUSDIToAcpFromAcpAddress = async () => {
     );
   }
   const publicKey = hd.key.privateToPublic(privateKey);
-  const fromAcpAddress = ckbUtils.encodeAcpAddress(publicKey);
-  const toAcpAddress =
-    'ckt1qq6pngwqn6e9vlm92th84rk0l4jp2h8lurchjmnwv8kq3rt5psf4vq0e4xk4rmg5jdkn8aams492a7jlg73ue0ghutfuy';
+  const fromSecp256k1Address = ckbUtils.encodeSecp256k1Address(publicKey);
+  const toAcpAddress = ckbUtils.encodeAcpAddress(publicKey);
 
-  const txSkeleton = await constructTxSkeletonToTransferUSDIFromAcpToAcp({
+  const txSkeleton = await constructTxSkeletonToTransferUSDIToAcpAddress({
     ckbUtils,
-    fromAcpAddress,
+    fromSecp256k1Address,
     toAcpAddress,
-    usdiAmount: 0.3,
-  });
+    usdiAmount: 5.7,
+  })
 
   const txHash = await signAndSendTxWithSecp256k1Key(
     ckbUtils,
@@ -37,6 +36,6 @@ const transferUSDIToAcpFromAcpAddress = async () => {
   console.log(`Transaction sent successfully! TxHash: ${txHash}`);
 }
 
-transferUSDIToAcpFromAcpAddress()
-  .then(() => console.log('Transfer USDI from Acp address to Acp address successfully.'))
-  .catch((error) => console.error('Error transferring USDI:', error));
+transferUSDIToAcpFromSecp256k1Address()
+  .then(() => console.log('Deposit USDI to Acp address successfully.'))
+  .catch((error) => console.error('Error depositing USDI:', error));

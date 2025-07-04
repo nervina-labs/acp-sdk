@@ -19,7 +19,9 @@ const createAcpCells = async () => {
   }
   const publicKey = hd.key.privateToPublic(privateKey);
   const fromSecp256k1Address = ckbUtils.encodeSecp256k1Address(publicKey);
-  const toAcpAddress = ckbUtils.encodeAcpAddress(publicKey);
+  // You can change the ACP public key to create ACP cells for other accounts.
+  const acpPublicKey = publicKey
+  const toAcpAddress = ckbUtils.encodeAcpAddress(acpPublicKey);
 
   const txSkeleton = await constructTxSkeletonToCreateAcpCells({
     ckbUtils,
