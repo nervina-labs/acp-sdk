@@ -8,7 +8,7 @@ import {
 
 dotenv.config();
 
-const transferUSDIToAcpFromSecp256k1Address = async () => {
+const depositUSDIToAcpFromSecp256k1Address = async () => {
   const ckbUtils = new CkbUtils({
     ckbRpcUrl: 'https://testnet.ckb.dev/rpc',
     ckbIndexerUrl: 'https://testnet.ckb.dev/indexer',
@@ -36,6 +36,6 @@ const transferUSDIToAcpFromSecp256k1Address = async () => {
   console.log(`Transaction sent successfully! TxHash: ${txHash}`);
 };
 
-transferUSDIToAcpFromSecp256k1Address()
+depositUSDIToAcpFromSecp256k1Address()
   .then(() => console.log('Deposit USDI to Acp address successfully.'))
   .catch((error) => console.error('Error depositing USDI:', error));

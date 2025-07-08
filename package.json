@@ -12,8 +12,9 @@
     "lint": "eslint \"{src,examples}/**/*.ts\" --fix",
     "generateAddress": "tsx examples/generateAddress.ts",
     "createAcpCells": "tsx examples/createAcpCells.ts",
-    "depositToAcp": "tsx examples/depositToAcp.ts",
-    "transferFromAcpToAcp": "tsx examples/transferFromAcpToAcp.ts",
+    "depositCKBToAcp": "tsx examples/depositCKBToAcp.ts",
+    "depositUSDIToAcp": "tsx examples/depositUSDIToAcp.ts",
+    "transferBetweenAcp": "tsx examples/transferBetweenAcp.ts",
     "withdrawAllFromAcp": "tsx examples/withdrawAllFromAcp.ts"
   },
   "keywords": [],

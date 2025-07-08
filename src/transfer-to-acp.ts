@@ -47,12 +47,12 @@ export const constructTxSkeletonToTransferUSDIToAcpAddress = async ({
 
   // Collect USDI input cells and check if we need an empty cell for transaction fee
   let usdiSupply = BI.from(0);
-  let usdiInputsCapacities = BI.from(0);
+  let usdiInputsCapacity = BI.from(0);
   let needEmptyCell = true;
   const inputCells: Cell[] = [];
   for (const cell of usdiCells) {
     usdiSupply = usdiSupply.add(codec.number.Uint128LE.unpack(cell.data));
-    usdiInputsCapacities = usdiInputsCapacities.add(BI.from(cell.cellOutput.capacity));
+    usdiInputsCapacity = usdiInputsCapacity.add(BI.from(cell.cellOutput.capacity));
     inputCells.push(cell);
     // Check if the cell has enough capacity for transaction fee, if it does, we can skip adding an empty cell
     if (BI.from(cell.cellOutput.capacity).gt(helpers.minimalCellCapacityCompatible(cell))) {
@@ -85,7 +85,7 @@ export const constructTxSkeletonToTransferUSDIToAcpAddress = async ({
     cellOutput: {
       lock: helpers.parseAddress(fromSecp256k1Address),
       type: ckbUtils.getUsdiTypeScript(),
-      capacity: `0x${usdiInputsCapacities.toString(16)}`,
+      capacity: `0x${usdiInputsCapacity.toString(16)}`,
     },
     data: `0x${Buffer.from(codec.number.Uint128LE.pack(usdiSupply.sub(usdiAmountForTransfer))).toString('hex')}`,
   };
@@ -137,7 +137,7 @@ export const constructTxToTransferUSDIToAcpAddress = async (
   return helpers.createTransactionFromSkeleton(txSkeleton);
 };
 
-export interface TransferringFromAcpToAcpParams {
+export interface TransferringBetweenAcpAddressesParams {
   ckbUtils: CkbUtils;
   fromAcpAddress: string;
   toAcpAddress: string;
@@ -154,13 +154,13 @@ export interface TransferringFromAcpToAcpParams {
  * @param feeRate - The fee rate in Shannons per kilobyte for the transaction. Defaults to 1000 shannons/KB.
  * @returns The constructed CKB transactionSkeleton.
  */
-export const constructTxSkeletonToTransferUSDIFromAcpToAcp = async ({
+export const constructTxSkeletonToTransferUSDIBetweenAcpAddresses = async ({
   ckbUtils,
   fromAcpAddress,
   toAcpAddress,
   usdiAmount,
   feeRate = 1000,
-}: TransferringFromAcpToAcpParams): Promise<TransactionSkeletonType> => {
+}: TransferringBetweenAcpAddressesParams): Promise<TransactionSkeletonType> => {
   const { balance: usdiBalance, cells: usdiCells } =
     await ckbUtils.getUSDIBalanceAndCells(fromAcpAddress);
   const usdiAmountForTransfer = BI.from(usdiAmount * USDI_DECIMALS);
@@ -177,17 +177,26 @@ export const constructTxSkeletonToTransferUSDIFromAcpToAcp = async ({
 
   let txSkeleton = helpers.TransactionSkeleton({ cellProvider: ckbUtils.indexer });
 
-  // Collect USDI input cells and check if we need an empty cell for transaction fee
+  // Collect USDI input cells and check if we have enough CKB for transaction fee
   let usdiSupply = BI.from(0);
-  let usdiInputsCapacities = BI.from(0);
+  let usdiInputsCapacity = BI.from(0);
+  let isCKBInsufficient = false;
   const inputCells: Cell[] = [];
   for (const cell of usdiCells) {
     usdiSupply = usdiSupply.add(codec.number.Uint128LE.unpack(cell.data));
-    usdiInputsCapacities = usdiInputsCapacities.add(BI.from(cell.cellOutput.capacity));
-    inputCells.push(cell);
+    usdiInputsCapacity = usdiInputsCapacity.add(BI.from(cell.cellOutput.capacity));
+    if (BI.from(cell.cellOutput.capacity).lte(helpers.minimalCellCapacityCompatible(cell))) {
+      inputCells.unshift(cell);
+    } else {
+      inputCells.push(cell);
+      isCKBInsufficient = true;
+    }
     if (usdiSupply.gt(usdiAmountForTransfer)) {
       break;
     }
+  }
+  if (isCKBInsufficient) {
+    throw new Error('No extra CKB available to pay for the transaction fee.');
   }
   if (usdiSupply.lt(usdiAmountForTransfer)) {
     throw new Error(
@@ -205,7 +214,7 @@ export const constructTxSkeletonToTransferUSDIFromAcpToAcp = async ({
     cellOutput: {
       lock: helpers.parseAddress(fromAcpAddress),
       type: ckbUtils.getUsdiTypeScript(),
-      capacity: `0x${usdiInputsCapacities.toString(16)}`,
+      capacity: `0x${usdiInputsCapacity.toString(16)}`,
     },
     data: `0x${Buffer.from(codec.number.Uint128LE.pack(usdiSupply.sub(usdiAmountForTransfer))).toString('hex')}`,
   };
@@ -245,9 +254,9 @@ export const constructTxSkeletonToTransferUSDIFromAcpToAcp = async ({
  * @param feeRate - The fee rate in Shannons per kilobyte for the transaction. Defaults to 1000 shannons/KB.
  * @returns The constructed CKB transaction.
  */
-export const constructTxToTransferUSDIFromAcpToAcp = async (
-  params: TransferringFromAcpToAcpParams,
+export const constructTxToTransferUSDIBetweenAcpAddresses = async (
+  params: TransferringBetweenAcpAddressesParams,
 ): Promise<Transaction> => {
-  const txSkeleton = await constructTxSkeletonToTransferUSDIFromAcpToAcp(params);
+  const txSkeleton = await constructTxSkeletonToTransferUSDIBetweenAcpAddresses(params);
   return helpers.createTransactionFromSkeleton(txSkeleton);
 };
