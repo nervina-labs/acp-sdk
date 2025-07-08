@@ -30,7 +30,7 @@ export const constructTxSkeletonToCreateAcpCells = async ({
   feeRate = 1000,
 }: CreatingAcpCellsParams): Promise<TransactionSkeletonType> => {
   const singleCapacity = BI.from(acpCapacity * CKB_UNIT_SCALE);
-  const expectedCapacities = singleCapacity.mul(BI.from(count));
+  const expectedCapacity = singleCapacity.mul(BI.from(count));
 
   const providerLock = helpers.parseAddress(fromSecp256k1Address);
   const acpLock = helpers.parseAddress(toAcpAddress);
@@ -38,19 +38,19 @@ export const constructTxSkeletonToCreateAcpCells = async ({
   let txSkeleton = helpers.TransactionSkeleton({ cellProvider: ckbUtils.indexer });
 
   // Collect empty input cells from the secp256k1 address
-  let inputsCapacities = BI.from(0);
+  let inputsCapacity = BI.from(0);
   const inputCells: Cell[] = [];
   const { emptyCells } = await ckbUtils.getCkbBalanceAndEmptyCells(fromSecp256k1Address);
   for (const cell of emptyCells) {
-    inputsCapacities = inputsCapacities.add(BI.from(cell.cellOutput.capacity));
+    inputsCapacity = inputsCapacity.add(BI.from(cell.cellOutput.capacity));
     inputCells.push(cell);
-    if (inputsCapacities.gt(expectedCapacities)) {
+    if (inputsCapacity.gt(expectedCapacity)) {
       break;
     }
   }
-  if (inputsCapacities.lt(expectedCapacities)) {
+  if (inputsCapacity.lt(expectedCapacity)) {
     throw new Error(
-      `Not enough capacity, expected: ${expectedCapacities.div(BI.from(CKB_UNIT_SCALE))}, got: ${inputsCapacities.div(BI.from(CKB_UNIT_SCALE))}.\n 
+      `Not enough capacity, expected: ${expectedCapacity.div(BI.from(CKB_UNIT_SCALE))}, got: ${inputsCapacity.div(BI.from(CKB_UNIT_SCALE))}.\n 
       More CKB is needed in the address: ${fromSecp256k1Address}`,
     );
   }
@@ -68,7 +68,7 @@ export const constructTxSkeletonToCreateAcpCells = async ({
   const changeOutput = {
     cellOutput: {
       lock: providerLock,
-      capacity: `0x${inputsCapacities.sub(expectedCapacities).toString(16)}`,
+      capacity: `0x${inputsCapacity.sub(expectedCapacity).toString(16)}`,
     },
     data: '0x',
   };

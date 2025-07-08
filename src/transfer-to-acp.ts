@@ -47,12 +47,12 @@ export const constructTxSkeletonToTransferUSDIToAcpAddress = async ({
 
   // Collect USDI input cells and check if we need an empty cell for transaction fee
   let usdiSupply = BI.from(0);
-  let usdiInputsCapacities = BI.from(0);
+  let usdiInputsCapacity = BI.from(0);
   let needEmptyCell = true;
   const inputCells: Cell[] = [];
   for (const cell of usdiCells) {
     usdiSupply = usdiSupply.add(codec.number.Uint128LE.unpack(cell.data));
-    usdiInputsCapacities = usdiInputsCapacities.add(BI.from(cell.cellOutput.capacity));
+    usdiInputsCapacity = usdiInputsCapacity.add(BI.from(cell.cellOutput.capacity));
     inputCells.push(cell);
     // Check if the cell has enough capacity for transaction fee, if it does, we can skip adding an empty cell
     if (BI.from(cell.cellOutput.capacity).gt(helpers.minimalCellCapacityCompatible(cell))) {
@@ -85,7 +85,7 @@ export const constructTxSkeletonToTransferUSDIToAcpAddress = async ({
     cellOutput: {
       lock: helpers.parseAddress(fromSecp256k1Address),
       type: ckbUtils.getUsdiTypeScript(),
-      capacity: `0x${usdiInputsCapacities.toString(16)}`,
+      capacity: `0x${usdiInputsCapacity.toString(16)}`,
     },
     data: `0x${Buffer.from(codec.number.Uint128LE.pack(usdiSupply.sub(usdiAmountForTransfer))).toString('hex')}`,
   };
@@ -179,11 +179,11 @@ export const constructTxSkeletonToTransferUSDIFromAcpToAcp = async ({
 
   // Collect USDI input cells and check if we need an empty cell for transaction fee
   let usdiSupply = BI.from(0);
-  let usdiInputsCapacities = BI.from(0);
+  let usdiInputsCapacity = BI.from(0);
   const inputCells: Cell[] = [];
   for (const cell of usdiCells) {
     usdiSupply = usdiSupply.add(codec.number.Uint128LE.unpack(cell.data));
-    usdiInputsCapacities = usdiInputsCapacities.add(BI.from(cell.cellOutput.capacity));
+    usdiInputsCapacity = usdiInputsCapacity.add(BI.from(cell.cellOutput.capacity));
     inputCells.push(cell);
     if (usdiSupply.gt(usdiAmountForTransfer)) {
       break;
@@ -205,7 +205,7 @@ export const constructTxSkeletonToTransferUSDIFromAcpToAcp = async ({
     cellOutput: {
       lock: helpers.parseAddress(fromAcpAddress),
       type: ckbUtils.getUsdiTypeScript(),
-      capacity: `0x${usdiInputsCapacities.toString(16)}`,
+      capacity: `0x${usdiInputsCapacity.toString(16)}`,
     },
     data: `0x${Buffer.from(codec.number.Uint128LE.pack(usdiSupply.sub(usdiAmountForTransfer))).toString('hex')}`,
   };
