@@ -220,7 +220,7 @@ Transfer some USDIs to another ACP address (another ACP address has been set in 
 Set a number you want to the `usdiAmount` and the `toAcpAddress` of the `examples/transferFromAcpToAcp.ts` and run the following command in your terminal:
 
 ```shell
-pnpm transferFromAcpToAcp
+pnpm transferBetweenAcp
 ```
 The example Testnet transaction is [here](https://testnet.explorer.nervos.org/transaction/0xfac001b8e99c8ca5bb2ac47cf58d61ce41b6efb7a4206f1fc7c3c0d964c63275).
 

@@ -180,7 +180,7 @@ export const constructTxSkeletonToTransferUSDIBetweenAcpAddresses = async ({
   // Collect USDI input cells and check if we have enough CKB for transaction fee
   let usdiSupply = BI.from(0);
   let usdiInputsCapacity = BI.from(0);
-  let isCKBInsufficient = false;
+  let isCKBSufficient = false;
   const inputCells: Cell[] = [];
   for (const cell of usdiCells) {
     usdiSupply = usdiSupply.add(codec.number.Uint128LE.unpack(cell.data));
@@ -189,13 +189,13 @@ export const constructTxSkeletonToTransferUSDIBetweenAcpAddresses = async ({
       inputCells.unshift(cell);
     } else {
       inputCells.push(cell);
-      isCKBInsufficient = true;
+      isCKBSufficient = true;
     }
-    if (usdiSupply.gt(usdiAmountForTransfer)) {
+    if (usdiSupply.gt(usdiAmountForTransfer) && isCKBSufficient) {
       break;
     }
   }
-  if (isCKBInsufficient) {
+  if (!isCKBSufficient) {
     throw new Error('No extra CKB available to pay for the transaction fee.');
   }
   if (usdiSupply.lt(usdiAmountForTransfer)) {
