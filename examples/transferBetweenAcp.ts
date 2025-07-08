@@ -2,7 +2,7 @@ import { hd } from '@ckb-lumos/lumos';
 import dotenv from 'dotenv';
 import {
   CkbUtils,
-  constructTxSkeletonToTransferUSDIFromAcpToAcp,
+  constructTxSkeletonToTransferUSDIBetweenAcpAddresses,
   signAndSendTxWithSecp256k1Key,
 } from '../src';
 
@@ -25,7 +25,7 @@ const transferUSDIToAcpFromAcpAddress = async () => {
   const toAcpAddress =
     'ckt1qq6pngwqn6e9vlm92th84rk0l4jp2h8lurchjmnwv8kq3rt5psf4vq0e4xk4rmg5jdkn8aams492a7jlg73ue0ghutfuy';
 
-  const txSkeleton = await constructTxSkeletonToTransferUSDIFromAcpToAcp({
+  const txSkeleton = await constructTxSkeletonToTransferUSDIBetweenAcpAddresses({
     ckbUtils,
     fromAcpAddress,
     toAcpAddress,

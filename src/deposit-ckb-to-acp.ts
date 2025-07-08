@@ -1,5 +1,4 @@
-import { BI, Cell, helpers } from '@ckb-lumos/lumos';
-import * as codec from '@ckb-lumos/codec';
+import { BI, Cell, helpers, OutPoint, Transaction } from '@ckb-lumos/lumos';
 import { CKB_UNIT_SCALE, CkbUtils } from './utils';
 import { TransactionSkeletonType } from '@ckb-lumos/lumos/helpers';
 
@@ -8,17 +7,20 @@ export interface DepositingToAcpParams {
   fromAddress: string;
   toAcpAddress: string;
   ckbAmount: number;
+  acpOutPoint?: OutPoint;
+  txSize?: number;
   feeRate?: number;
 }
 
 /**
- * Constructs a CKB transactionSkeleton to transfer USDI from a secp256k1 address to an ACP (Anyone-Can-Pay) address.
+ * Constructs a CKB transactionSkeleton to deposit CKB from a non-acp address to an ACP address.
  * Tx Structure:
- * [emptyInputs(optional), toAcpCell] -> [toAcpOutput, changeCkbOutput(optional)]
+ * [emptyInputs, toAcpCell] -> [toAcpOutput, changeOutput(optional)]
  * @param ckbUtils - An instance of CkbUtils to interact with CKB node and indexer.
  * @param fromAddress - The address that will provide USDI and CKB(maybe) for the transaction.
  * @param toAcpAddress - The ACP address to transfer USDI to.
  * @param ckbAmount - The amount of CKB to transfer.
+ * @param txSize - The size of the transaction in bytes. If not provided, it will be calculated based on the current transaction.
  * @param feeRate - The fee rate in Shannons per kilobyte for the transaction. Defaults to 1000 shannons/KB.
  * @returns The constructed CKB transactionSkeleton.
  */
@@ -27,6 +29,8 @@ export const constructTxSkeletonToDepositCKBToAcpAddress = async ({
   fromAddress,
   toAcpAddress,
   ckbAmount,
+  acpOutPoint,
+  txSize,
   feeRate = 1000,
 }: DepositingToAcpParams): Promise<TransactionSkeletonType> => {
   const { balance: ckbBalance, emptyCells } =
@@ -38,9 +42,11 @@ export const constructTxSkeletonToDepositCKBToAcpAddress = async ({
     );
   }
 
-  const toAcpCell = await ckbUtils.getAcpUsdiCell(toAcpAddress);
+  const toAcpCell = await ckbUtils.getAcpUsdiCell(toAcpAddress, acpOutPoint);
   if (!toAcpCell) {
-    throw new Error(`No ACP cell found for address: ${toAcpAddress}`);
+    throw new Error(
+      `No ACP cell found for address: ${toAcpAddress} ${acpOutPoint ? `with outPoint: ${JSON.stringify(acpOutPoint)}` : ''}`,
+    );
   }
 
   let txSkeleton = helpers.TransactionSkeleton({ cellProvider: ckbUtils.indexer });
@@ -73,20 +79,22 @@ export const constructTxSkeletonToDepositCKBToAcpAddress = async ({
       lock: helpers.parseAddress(fromAddress),
       capacity: `0x${inputsCapacity.sub(ckbAmountForTransfer).toString(16)}`,
     },
-    data: `0x${Buffer.from(codec.number.Uint128LE.pack(ckbBalance.sub(ckbAmountForTransfer))).toString('hex')}`,
+    data: '0x',
   };
   txSkeleton = txSkeleton.update('outputs', (outputs) => outputs.push(acpOutput, changeOutput));
 
-  txSkeleton = txSkeleton.update('cellDeps', (cellDeps) =>
-    cellDeps.push(ckbUtils.getSecp256k1Dep(), ckbUtils.getAcpCellDep(), ckbUtils.getUsdiCellDep()),
-  );
+  const cellDepList = [ckbUtils.getAcpCellDep(), ckbUtils.getUsdiCellDep()];
+  if (ckbUtils.isSecp256k1Address(fromAddress)) {
+    cellDepList.push(ckbUtils.getSecp256k1Dep());
 
-  txSkeleton = txSkeleton.update('witnesses', (witnesses) => {
-    return witnesses.set(0, ckbUtils.generateSecp256k1EmptyWitness());
-  });
+    txSkeleton = txSkeleton.update('witnesses', (witnesses) => {
+      return witnesses.set(0, ckbUtils.generateSecp256k1EmptyWitness());
+    });
+  }
+  txSkeleton = txSkeleton.update('cellDeps', (cellDeps) => cellDeps.push(...cellDepList));
 
   // Calculate transaction fee and adjust change output capacity
-  const txFee = ckbUtils.calculateTxFee(txSkeleton, feeRate);
+  const txFee = ckbUtils.calculateTxFee(txSkeleton, feeRate, txSize);
   txSkeleton = txSkeleton.update('outputs', (outputs) => {
     const changeOutput = outputs.get(outputs.size - 1)!;
     return outputs.set(outputs.size - 1, {
@@ -99,4 +107,23 @@ export const constructTxSkeletonToDepositCKBToAcpAddress = async ({
   });
 
   return txSkeleton;
+};
+
+/**
+ * Constructs a CKB transactionSkeleton to deposit CKB from a non-acp address to an ACP address.
+ * Tx Structure:
+ * [emptyInputs, toAcpCell] -> [toAcpOutput, changeOutput(optional)]
+ * @param ckbUtils - An instance of CkbUtils to interact with CKB node and indexer.
+ * @param fromAddress - The address that will provide USDI and CKB(maybe) for the transaction.
+ * @param toAcpAddress - The ACP address to transfer USDI to.
+ * @param ckbAmount - The amount of CKB to transfer.
+ * @param txSize - Optional transaction size in bytes. If not provided, it will be calculated based on the current transaction.
+ * @param feeRate - The fee rate in Shannons per kilobyte for the transaction. Defaults to 1000 shannons/KB.
+ * @returns The constructed CKB transactionSkeleton.
+ */
+export const constructTxToDepositCKBToAcpAddress = async (
+  params: DepositingToAcpParams,
+): Promise<Transaction> => {
+  const txSkeleton = await constructTxSkeletonToDepositCKBToAcpAddress(params);
+  return helpers.createTransactionFromSkeleton(txSkeleton);
 };

@@ -12,6 +12,7 @@ ACP SDK is a toolkit that helps developers interact with the Anyone-Can-Pay (ACP
   - [Getting Started with Examples](#getting-started-with-examples)
     - [1. Generate Your CKB Address and Obtain Tokens](#1-generate-your-ckb-address-and-obtain-tokens)
     - [2. Create ACP Cells](#2-create-acp-cells)
+    - [2-5. Optional: Deposit CKB to Your ACP Address](#2-5-optional-deposit-ckb-to-your-acp-address)
     - [3. Deposit USDIs to Your ACP Address](#3-deposit-usdis-to-your-acp-address)
     - [4. Transfer USDIs Between ACP Addresses](#4-transfer-usdis-between-acp-addresses)
     - [5. Withdraw All USDIs to a Non-ACP Address](#5-withdraw-all-usdis-to-a-non-acp-address)
@@ -99,19 +100,72 @@ Witnesses:
     <valid signature for public key hash A>
 ```
 
+### 2-5. Optional: Deposit CKB to Your ACP Address
+
+> **Important:** Make sure at least one ACP cell exists before transferring to a new ACP address.
+> 
+> The function hasAcpCells of CkbUtils is to check if there's at least an ACP cell.
+
+This step transfers CKB from your secp256k1 address to your ACP address (automatically generated with `EXAMPLE_CKB_SECP256K1_PRIVATE_KEY` in the example).
+
+To deposit:
+1. Open `examples/depositCKBToAcp.ts` 
+2. Set your desired amount in the `ckbAmount` parameter
+3. Run the following command:
+
+```shell
+pnpm depositCKBToAcp
+```
+The example Testnet transaction is [here](https://testnet.explorer.nervos.org/transaction/0xa6419b1da658ed99d633eeeb0f41413950fd02be28c283dbe26a4579ab94781c).
+
+```yaml
+Inputs:
+    Normal Cell:
+        Capacity: N CKBytes
+        Lock:
+            code_hash: secp256k1_blake2b lock
+            args: <public key hash A>
+    Anyone-can-pay Cell:
+        Capacity: 144.01 CKBytes
+        Type: USDI type script
+        Lock:
+            code_hash: anyone-can-pay lock
+            args: <public key hash A>
+        Data:
+            Amount: M USDI
+Outputs:
+    Anyone-can-pay Cell:
+        Capacity: (144.01 + K) CKBytes
+        Type: USDI type script
+        Lock:
+            code_hash: anyone-can-pay lock
+            args: <public key hash A>
+        Data:
+            Amount: M USDI
+    Change Cell:
+        Capacity: (N - K - fee) CKBytes
+        Lock:
+            code_hash: secp256k1_blake2b lock
+            args: <public key hash A>
+Witnesses:
+    <valid signature for public key hash A>
+```
+
 ### 3. Deposit USDIs to Your ACP Address
 
 > **Important:** Make sure at least one ACP cell exists before transferring to a new ACP address.
+> 
+> The function hasAcpCells of CkbUtils is to check if there's at least an ACP cell.
 
 This step transfers USDIs from your secp256k1 address to your ACP address (automatically generated with `EXAMPLE_CKB_SECP256K1_PRIVATE_KEY` in the example).
 
 To deposit:
-1. Open `examples/depositToAcp.ts` 
+1. Open `examples/depositUSDIToAcp.ts` 
 2. Set your desired amount in the `usdiAmount` parameter
 3. Run the following command:
 
 ```shell
-pnpm depositToAcp
+pnpm depositUSDIToAcp
 ```
 The example Testnet transaction is [here](https://testnet.explorer.nervos.org/transaction/0xf339e314ee292351a9d27bfbd768ab266d28106405518e224e57701fb67a5898).
 

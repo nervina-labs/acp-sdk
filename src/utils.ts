@@ -9,6 +9,7 @@ import {
   helpers,
   hd,
   Script,
+  OutPoint,
 } from '@ckb-lumos/lumos';
 import { blockchain } from '@ckb-lumos/lumos/codec';
 import * as codec from '@ckb-lumos/codec';
@@ -131,6 +132,19 @@ export class CkbUtils {
     };
   };
 
+  isSecp256k1Address = (address: string): boolean => {
+    try {
+      const lock = helpers.parseAddress(address);
+      return (
+        lock.codeHash === this.lumosConfig.SCRIPTS.SECP256K1_BLAKE160.CODE_HASH &&
+        lock.hashType === this.lumosConfig.SCRIPTS.SECP256K1_BLAKE160.HASH_TYPE
+      );
+    } catch (error) {
+      console.error('Error checking if address is Secp256k1:', error);
+      return false;
+    }
+  };
+
   getUsdiTypeScript = (): Script =>
     this.isMainnet ? USDI_MAINNET_TYPE_SCRIPT : USDI_TESTNET_TYPE_SCRIPT;
 
@@ -182,12 +196,26 @@ export class CkbUtils {
     return { balance, cells };
   };
 
-  getAcpUsdiCell = async (address: string): Promise<Cell | null> => {
+  // Retrieves a single ACP cell for the given address and if the acpOutPoint is provided, it will return that specific cell.
+  getAcpUsdiCell = async (address: string, acpOutPoint?: OutPoint): Promise<Cell | null> => {
     const collector = this.indexer.collector({
       lock: helpers.parseAddress(address),
       type: this.getUsdiTypeScript(),
       outputCapacityRange: [ACP_MIN_HEX_CAPACITY, '0xFFFFFFFFFFFFFFFF'],
     });
+    if (acpOutPoint) {
+      const { cell } = await this.rpc.getLiveCell(acpOutPoint, true);
+      if (!cell) {
+        throw new Error(
+          `No ACP cell found for address: ${address} with outPoint: ${JSON.stringify(acpOutPoint)}`,
+        );
+      }
+      return {
+        cellOutput: cell.output,
+        data: cell.data.content,
+        outPoint: acpOutPoint,
+      } as Cell;
+    }
     for await (const cell of collector.collect()) {
       return cell;
     }
@@ -231,8 +259,8 @@ export class CkbUtils {
     return BI.from(fee);
   };
 
-  calculateTxFee = (txSkeleton: TransactionSkeletonType, feeRate: number): BI => {
-    const size = this._getTransactionSize(txSkeleton);
+  calculateTxFee = (txSkeleton: TransactionSkeletonType, feeRate: number, txSize?: number): BI => {
+    const size = txSize ?? this._getTransactionSize(txSkeleton);
     return this._calculateFeeCompatible(size, feeRate);
   };
 }
