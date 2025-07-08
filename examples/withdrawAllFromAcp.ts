@@ -1,6 +1,10 @@
-import { hd } from "@ckb-lumos/lumos";
+import { hd } from '@ckb-lumos/lumos';
 import dotenv from 'dotenv';
-import { CkbUtils, constructTxSkeletonToTransferAllUSDI, signAndSendTxWithSecp256k1Key } from "../src";
+import {
+  CkbUtils,
+  constructTxSkeletonToTransferAllUSDI,
+  signAndSendTxWithSecp256k1Key,
+} from '../src';
 
 dotenv.config();
 
@@ -30,7 +34,7 @@ const transferUSDIToAcpFromSecp256k1Address = async () => {
   const txHash = await signAndSendTxWithSecp256k1Key(ckbUtils, txSkeleton, privateKey);
 
   console.log(`Transaction sent successfully! TxHash: ${txHash}`);
-}
+};
 
 transferUSDIToAcpFromSecp256k1Address()
   .then(() => console.log('WIthdraw USDI to Acp address successfully.'))

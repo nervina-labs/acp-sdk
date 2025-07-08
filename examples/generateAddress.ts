@@ -1,6 +1,6 @@
-import { hd } from "@ckb-lumos/lumos";
+import { hd } from '@ckb-lumos/lumos';
 import dotenv from 'dotenv';
-import { CkbUtils } from "../src";
+import { CkbUtils } from '../src';
 
 dotenv.config();
 
@@ -21,8 +21,8 @@ const generateSecp256k1Address = async () => {
   const secp256k1Address = ckbUtils.encodeSecp256k1Address(publicKey);
   console.log(`Secp256k1 Address: ${secp256k1Address}`);
 
-  const acpAddress = ckbUtils.encodeAcpAddress(publicKey)
+  const acpAddress = ckbUtils.encodeAcpAddress(publicKey);
   console.log('Acp Address:', acpAddress);
-}
+};
 
-generateSecp256k1Address()
+generateSecp256k1Address();

@@ -43,7 +43,7 @@ export const constructTxSkeletonToTransferAllUSDI = async ({
     throw new Error(`No USDI found in ACP address: ${fromAcpAddress}`);
   }
   txSkeleton = txSkeleton.update('inputs', (inputs) => inputs.push(...inputCells));
-  
+
   const output = {
     cellOutput: {
       lock: helpers.parseAddress(toNonAcpAddress),
@@ -59,10 +59,10 @@ export const constructTxSkeletonToTransferAllUSDI = async ({
   );
 
   txSkeleton = txSkeleton.update('witnesses', (witnesses) => {
-    return witnesses.set(0, ckbUtils. generateSecp256k1EmptyWitness());
+    return witnesses.set(0, ckbUtils.generateSecp256k1EmptyWitness());
   });
 
-  const txFee = ckbUtils.calculateTxFee(txSkeleton, feeRate); 
+  const txFee = ckbUtils.calculateTxFee(txSkeleton, feeRate);
   txSkeleton = txSkeleton.update('outputs', (outputs) => {
     return outputs.set(0, {
       cellOutput: {
@@ -73,7 +73,7 @@ export const constructTxSkeletonToTransferAllUSDI = async ({
     });
   });
 
-  return txSkeleton
+  return txSkeleton;
 };
 
 /**
@@ -90,4 +90,3 @@ export const constructTxToTransferAllUSDI = async (
   const txSkeleton = await constructTxSkeletonToTransferAllUSDI(params);
   return helpers.createTransactionFromSkeleton(txSkeleton);
 };
-

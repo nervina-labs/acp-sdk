@@ -1,6 +1,10 @@
-import { hd } from "@ckb-lumos/lumos";
+import { hd } from '@ckb-lumos/lumos';
 import dotenv from 'dotenv';
-import { CkbUtils, constructTxSkeletonToCreateAcpCells, signAndSendTxWithSecp256k1Key } from "../src";
+import {
+  CkbUtils,
+  constructTxSkeletonToCreateAcpCells,
+  signAndSendTxWithSecp256k1Key,
+} from '../src';
 
 dotenv.config();
 
@@ -20,7 +24,7 @@ const createAcpCells = async () => {
   const publicKey = hd.key.privateToPublic(privateKey);
   const fromSecp256k1Address = ckbUtils.encodeSecp256k1Address(publicKey);
   // You can change the ACP public key to create ACP cells for other accounts.
-  const acpPublicKey = publicKey
+  const acpPublicKey = publicKey;
   const toAcpAddress = ckbUtils.encodeAcpAddress(acpPublicKey);
 
   const txSkeleton = await constructTxSkeletonToCreateAcpCells({
@@ -33,8 +37,8 @@ const createAcpCells = async () => {
   const txHash = await signAndSendTxWithSecp256k1Key(ckbUtils, txSkeleton, privateKey);
 
   console.log(`Transaction sent successfully! TxHash: ${txHash}`);
-}
+};
 
 createAcpCells()
-  .then(() => console.log("Acp cells created successfully."))
-  .catch((error) => console.error("Error creating ACP cells:", error));
+  .then(() => console.log('Acp cells created successfully.'))
+  .catch((error) => console.error('Error creating ACP cells:', error));

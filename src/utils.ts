@@ -95,6 +95,31 @@ export class CkbUtils {
     return helpers.encodeToAddress(acpLock, { config: this.lumosConfig });
   };
 
+  hasAcpCells = async (acpAddress: string): Promise<boolean> => {
+    try {
+      const lock = helpers.parseAddress(acpAddress);
+      // Verify this is an ACP address
+      if (
+        lock.codeHash !== this.lumosConfig.SCRIPTS.ANYONE_CAN_PAY.CODE_HASH &&
+        lock.hashType !== 'type'
+      ) {
+        throw new Error('The provided address is not an ACP address');
+      }
+      const collector = this.indexer.collector({
+        lock,
+        type: this.getUsdiTypeScript(),
+      });
+      // Check if there's at least one cell
+      for await (const _ of collector.collect()) {
+        return true;
+      }
+      return false;
+    } catch (error) {
+      console.error('Error checking ACP cells:', error);
+      return false;
+    }
+  };
+
   getAcpCellDep = (): CellDep => {
     const acpDep = this.lumosConfig.SCRIPTS.ANYONE_CAN_PAY;
     return {
