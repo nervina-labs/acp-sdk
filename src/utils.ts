@@ -11,9 +11,9 @@ import {
   Script,
   OutPoint,
 } from '@ckb-lumos/lumos';
-import { blockchain } from '@ckb-lumos/lumos/codec';
-import * as codec from '@ckb-lumos/codec';
-import { createTransactionFromSkeleton, TransactionSkeletonType } from '@ckb-lumos/lumos/helpers';
+import { blockchain } from '@ckb-lumos/base';
+import { number, bytes } from '@ckb-lumos/codec';
+import { createTransactionFromSkeleton, TransactionSkeletonType } from '@ckb-lumos/helpers';
 
 // Minimum Capacity: JoyID lock(55 bytes) + UDT type script(65 bytes) + UDT cell data(16 bytes) + Cell capacity(8 bytes) = 144 bytes
 const ACP_MIN_CAPACITY = 144;
@@ -189,7 +189,7 @@ export class CkbUtils {
     let balance = BI.from(0);
     const cells: Cell[] = [];
     for await (const cell of collector.collect()) {
-      balance = balance.add(codec.number.Uint128LE.unpack(cell.data));
+      balance = balance.add(number.Uint128LE.unpack(cell.data));
       cells.push(cell);
     }
 
@@ -237,7 +237,7 @@ export class CkbUtils {
 
   generateSecp256k1EmptyWitness = () => {
     const witnessArgs = { lock: '0x' + '00'.repeat(65) };
-    const witness = codec.bytes.hexify(blockchain.WitnessArgs.pack(witnessArgs));
+    const witness = bytes.hexify(blockchain.WitnessArgs.pack(witnessArgs));
     return witness;
   };
 

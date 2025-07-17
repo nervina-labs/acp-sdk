@@ -1,6 +1,6 @@
 {
   "name": "@nervina-labs/acp-sdk",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "A toolkit that helps developers interact with the Anyone-Can-Pay (ACP) lock script on Nervos CKB",
   "publishConfig": {
     "access": "public"
@@ -49,7 +49,9 @@
     "typescript-eslint": "^8.35.1"
   },
   "dependencies": {
+    "@ckb-lumos/base": "^0.23.0",
     "@ckb-lumos/codec": "^0.23.0",
+    "@ckb-lumos/helpers": "^0.23.0",
     "@ckb-lumos/lumos": "^0.23.0",
     "viem": "^2.31.6"
   }
