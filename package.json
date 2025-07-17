@@ -1,5 +1,5 @@
 {
-  "name": "@nervia-labs/acp-sdk",
+  "name": "@nervina-labs/acp-sdk",
   "version": "0.1.0",
   "description": "",
   "main": "./dist/index.js",
