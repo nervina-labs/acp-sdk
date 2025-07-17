@@ -8,7 +8,13 @@ importers:
 
   .:
     dependencies:
+      '@ckb-lumos/base':
+        specifier: ^0.23.0
+        version: 0.23.0
       '@ckb-lumos/codec':
+        specifier: ^0.23.0
+        version: 0.23.0
+      '@ckb-lumos/helpers':
         specifier: ^0.23.0
         version: 0.23.0
       '@ckb-lumos/lumos':
