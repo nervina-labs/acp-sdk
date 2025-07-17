@@ -1,5 +1,5 @@
 import { commons, hd, helpers } from '@ckb-lumos/lumos';
-import { TransactionSkeletonType } from '@ckb-lumos/lumos/helpers';
+import { TransactionSkeletonType } from '@ckb-lumos/helpers';
 import { CkbUtils } from './utils';
 
 export const signTxSkeletonWithSecp256k1Key = async (

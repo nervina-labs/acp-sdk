@@ -1,6 +1,6 @@
 {
   "name": "@nervina-labs/acp-sdk",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "A toolkit that helps developers interact with the Anyone-Can-Pay (ACP) lock script on Nervos CKB",
   "publishConfig": {
     "access": "public"
